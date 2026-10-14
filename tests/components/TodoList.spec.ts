@@ -126,4 +126,109 @@ describe("TodoList", () => {
       wrapper.findComponent(TodoItem).props("todo").completed,
     ).toStrictEqual(false);
   });
+
+  it("should clear all completed todos when clear-completed is emitted from child", async () => {
+    // Arrange
+    const wrapper = shallowMount(TodoList);
+
+    // Act: add 3 todos to list and toggle the first and last
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Maak een lijst");
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Vink een taak af");
+    wrapper
+      .findComponent(TodoInput)
+      .vm.$emit("add-todo", "Verwijder completed");
+    await flushPromises();
+
+    wrapper.findAllComponents(TodoItem)[0].vm.$emit("toggle", 1);
+    wrapper.findAllComponents(TodoItem)[2].vm.$emit("toggle", 3);
+    await flushPromises();
+
+    wrapper.getByDataTest("clear-completed").trigger("click");
+    await flushPromises();
+
+    // Assert: confirm if only the second todo is left
+    expect(wrapper.findAllComponents(TodoItem)).toHaveLength(1);
+    expect(wrapper.findAllComponents(TodoItem)[0].props("todo")).toStrictEqual({
+      id: 2,
+      text: "Vink een taak af",
+      completed: false,
+    });
+  });
+
+  it("should show no-results when filter is active and no todos match", async () => {
+    // Arrange
+    const wrapper = shallowMount(TodoList);
+
+    // Act: add 2 todos to list and filter for completed todos
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Maak een lijst");
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Vink een taak af");
+    await flushPromises();
+
+    wrapper.getByDataTest("filter-completed").trigger("click");
+    await flushPromises();
+
+    // Assert: confirm if no-results is visible and todo-list is not
+    expect(wrapper.getByDataTest("no-results").exists()).toBe(true);
+    expect(wrapper.getByDataTest("todo-list").exists()).toBe(false);
+  });
+
+  it("should show results when filter is all and todos exist", async () => {
+    // Arrange
+    const wrapper = shallowMount(TodoList);
+
+    // Act: add 2 todos to list and filter for completed todos
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Maak een lijst");
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Vink een taak af");
+    await flushPromises();
+
+    wrapper.getByDataTest("filter-all").trigger("click");
+    await flushPromises();
+
+    // Assert: confirm if todo-list is visible and no-results is not
+    expect(wrapper.getByDataTest("no-results").exists()).toBe(false);
+    expect(wrapper.getByDataTest("todo-list").exists()).toBe(true);
+    expect(wrapper.findAllComponents(TodoItem)).toHaveLength(2);
+  });
+
+  it("should show results when filter is active and todos match", async () => {
+    // Arrange
+    const wrapper = shallowMount(TodoList);
+
+    // Act: add 2 todos to list and filter for completed todos
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Maak een lijst");
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Vink een taak af");
+    await flushPromises();
+
+    wrapper.findAllComponents(TodoItem)[0].vm.$emit("toggle", 1);
+    await flushPromises();
+
+    wrapper.getByDataTest("filter-active").trigger("click");
+    await flushPromises();
+
+    // Assert: confirm if todo-list is visible and no-results is not
+    expect(wrapper.getByDataTest("no-results").exists()).toBe(false);
+    expect(wrapper.getByDataTest("todo-list").exists()).toBe(true);
+    expect(wrapper.findAllComponents(TodoItem)).toHaveLength(1);
+  });
+
+  it("should show results when filter is completed and todos match", async () => {
+    // Arrange
+    const wrapper = shallowMount(TodoList);
+
+    // Act: add 2 todos to list and filter for completed todos
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Maak een lijst");
+    wrapper.findComponent(TodoInput).vm.$emit("add-todo", "Vink een taak af");
+    await flushPromises();
+
+    wrapper.findAllComponents(TodoItem)[0].vm.$emit("toggle", 1);
+    await flushPromises();
+
+    wrapper.getByDataTest("filter-completed").trigger("click");
+    await flushPromises();
+
+    // Assert: confirm if todo-list is visible and no-results is not
+    expect(wrapper.getByDataTest("no-results").exists()).toBe(false);
+    expect(wrapper.getByDataTest("todo-list").exists()).toBe(true);
+    expect(wrapper.findAllComponents(TodoItem)).toHaveLength(1);
+  });
 });
